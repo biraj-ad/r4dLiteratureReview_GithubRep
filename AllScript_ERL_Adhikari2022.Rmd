@@ -18,12 +18,14 @@ library(tidyr) #for the separate_rows function
 library(ggpubr) #to combine multiple ggplot objects
 ```
 
+
+# Figure 3: Temporal Trends in Research and Methods
 ```{r reading data}
 data = read.csv('ForFig3_ResearchTrends_Methods.csv', header = TRUE, sep = ",")
 ```  
 
 Making adjustments for the figures
-```{r}
+```{r fig 3 data adjustments}
 researchtrends <- data %>%
   group_by(Year) %>% summarize(n = n()) 
 researchtrends$cumsum <- cumsum(researchtrends$n)
@@ -44,7 +46,7 @@ pies$Method = factor(pies$Method, levels = c("Biophysical", "Monetary", "Socio-c
 ```
 
 Creating a temporal trends in research figure
-```{r}
+```{r fig 3(a)}
 researchtrends_fig = ggplot(data = researchtrends, aes(x = Year, y = n)) + 
   
   #bar chart for publications per year
@@ -74,7 +76,7 @@ researchtrends_fig
 ```  
 
 Creating the pie charts for methods
-```{r}
+```{r fig 3(b)}
 #1st Pie chart
 pie1_fig = pies %>% filter(time.period == "First") %>% 
 ggplot(aes(x = "", y = Count, fill = Method)) +
@@ -150,7 +152,7 @@ pie4_fig
 ```  
 Combining figures using facet grid
 
-```{r}
+```{r combining 3(a) and 3(b), saving the plot}
 png(filename = "Figure3.png",            
   width = 2400,        
   height = 2100,
@@ -161,5 +163,139 @@ png(filename = "Figure3.png",
 ggarrange(ggarrange(pie1_fig, pie2_fig, pie3_fig, pie4_fig, nrow = 1, ncol = 4, widths = c(1.3,0.8,0.5,0.5),  common.legend = TRUE, legend = "top"), researchtrends_fig, nrow = 2, ncol =1, heights = c(1, 3))
 
 dev.off()
+```  
+
+```{r removing variables}
+rm(list = ls())
+```  
+
+# Fig 5: Trends in NCP  
+Figure 5 draws data from 2 files:  
+1. ForFig5_NCPCount.csv: For the occurrence of NCP in the 140 articles  
+2/ ForFig5_6_DriversTrends.csv: For the occurrences of positive and negative trends in NCP in the 140 articles   
+```{r data add and adjustments}
+#the ncpcount variable is used to make the overall count linegraph in Fig5
+ncpcount <- read.csv("ForFig5_NCPCount.csv", header = TRUE, sep = ",")
+
+#making this variable compatible with ggplot
+ncpcount <- ncpcount[nrow(ncpcount),-1]
+ncpcount<- data.frame(t(ncpcount))
+ncpcount<- ncpcount %>% mutate(NCP = rownames(ncpcount))
+rownames(ncpcount) <- c(1:nrow(ncpcount))
+colnames(ncpcount) <- c("Count", "NCP")
+
+#adding the labels
+ncpcount <- ncpcount %>% 
+mutate(Label = c("Habitat creaiton and maintenance (HAB)",
+                 "Pollination and dispersal of seeds and other propagules (POL)",
+                 "Regulation of air quality (AIR)",
+                 "Regulation of climate (CLI)",
+                 "Regulation of freshwater quantity, location and timing (WQN)",
+                 "Regulation of freshwater and coastal water quality (WQL)",
+                 "Formation, protection and decontamination of soils and sediments (SOI)",
+                 "Regulation of hazards and extreme events (HAZ)",
+                 "Regulation of detrimental organisms and biological processes (ORG)",
+                 "Energy (NRG)",
+                 "Food and feed (FOD)",
+                 "Materials, companionship and labor (MAT)",
+                 "Medicinal, biochemical and genetic resources (MED)",
+                 "Learning and inspiration (INS)",
+                 "Physical and psychological experiences (EXP)",
+                 "Supporting identities (IDE)",
+                 "Maintenance of options (OPT)"
+                 
+))
+
+#this grp column is necessary for ggplot2
+ncpcount <- ncpcount %>% mutate(grp = rep(1, nrow(ncpcount)))
+
+#the labels of ncpcount is useful for another variable, so we store it for now
+for_label <- ncpcount %>% select(NCP, Label)
+
+#the ncp trend variable is used to create stacked bar charts of counts of NCP trends
+ncptrend <-read.csv("ForFig5_6_DriversTrends.csv")
+ncptrend <- ncptrend %>% 
+  filter (NCP != "NA") %>% 
+  group_by(NCP, Trend) %>%
+  summarize(Count = round(sum(TrendCount)))
+
+#we use the label of ncpcount for ncptrend too
+ncptrend <- merge(ncptrend, for_label, by = "NCP")
+rm(for_label)
+
+#creating percentages to positive and negative trends
+ncptrend<- ncptrend %>% group_by(Label, Trend) %>% summarize(TotalCount = sum(Count))
+ncptrend <- ncptrend %>% mutate(Percent = round(TotalCount/sum(TotalCount), 2))
+
+#factorizing the Trend column
+ncptrend$Trend = factor(ncptrend$Trend, levels = c("Positive", "Negative"))
+```  
+
+Making the figure::
+```{r ncp trends figure}
+figure = ggplot() +
+  #line graph for total number of occurrences for each NCP
+  geom_line(data = ncpcount, 
+            aes(x = reorder(Label, Count), y = Count, group = grp, color = '#003366'), 
+            size = 1) + 
+  #adding points within this line
+  geom_point(data = ncpcount, 
+              aes(x = Label, y = Count), color = '#003366', size = 1.2) + 
+  #assigning colors again so that it shows up in the legend
+  scale_colour_manual(name = "", values =c('#003366'), labels = c('Total Count')) + 
+ 
+  
+  #adding stacked bar chart for trends in positive and negative trends
+  geom_col(data = ncptrend, 
+           aes(x = Label, y = TotalCount, fill = Trend), width = 0.6, position = "stack") +
+  
+  #adding percentage values for negative trends for each NCP
+  geom_text(data = ncptrend[ncptrend$Trend == "Negative",], 
+          aes(x = Label, y = TotalCount, label=paste0(Percent*100,"%"), group = Trend),
+          position=position_dodge(width=0.6), vjust= 1,  inherit.aes = TRUE, size = 2.5) + 
+  
+  #customizing colors for staked chart
+  scale_fill_manual(values = c("#a6d854", "#fc8d62")) + 
+  
+
+ 
+   theme(
+    legend.title = element_text(size = 7),
+    legend.key.size = unit(0.6, 'cm'),
+    legend.text = element_text(size = 7.5),
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text = element_text(size = 7.5),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(size = 0.15, linetype = "solid", colour = "#F0F0F0"),
+    panel.grid.minor = element_line(size = 0.15, linetype = "solid", colour = "#F0F0F0")
+  ) + 
+  
+  scale_y_continuous(limits = c(0,85)) + 
+  
+  xlab("NCPs") +
+  ylab("Count")+
+  coord_flip() 
+
+#saving to file
+png(filename = "Figure5.png",            
+  width = 2300,        
+  height = 1500,
+  res = 300,  
+  ) 
+
+figure
+```  
+
+```{r removing variables for figure 5}
+rm(list = ls())
+```
+
+
+# Figure 6: Drivers of Change  
+Note: We combine positive and negative drivers of change manually
+## Positive Drivers of Change  
+```{r}
+
 ```
 
