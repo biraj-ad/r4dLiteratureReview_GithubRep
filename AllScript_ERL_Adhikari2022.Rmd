@@ -20,7 +20,7 @@ library(ggpubr) #to combine multiple ggplot objects
 
 
 # Figure 3: Temporal Trends in Research and Methods
-```{r reading data}
+```{r reading data, figure 3}
 data = read.csv('ForFig3_ResearchTrends_Methods.csv', header = TRUE, sep = ",")
 ```  
 
@@ -47,7 +47,7 @@ pies$Method = factor(pies$Method, levels = c("Biophysical", "Monetary", "Socio-c
 
 Creating a temporal trends in research figure
 ```{r fig 3(a)}
-researchtrends_fig = ggplot(data = researchtrends, aes(x = Year, y = n)) + 
+researchtrends_fig <- ggplot(data = researchtrends, aes(x = Year, y = n)) + 
   
   #bar chart for publications per year
   geom_bar(color = "#608000", fill = "#608000", stat = "identity") + 
@@ -78,12 +78,10 @@ researchtrends_fig
 Creating the pie charts for methods
 ```{r fig 3(b)}
 #1st Pie chart
-pie1_fig = pies %>% filter(time.period == "First") %>% 
+pie1_fig <- pies %>% filter(time.period == "First") %>% 
 ggplot(aes(x = "", y = Count, fill = Method)) +
   geom_bar(stat = "identity", width = 1) + 
   scale_fill_manual(values = c("#b2df8a", "#1f78b4", "#a6cee3")) + 
-    #geom_text(aes(label = paste(round(Count / sum(Count) * 100, 1), "%")),
-           # position = position_stack(vjust = 0.5), size = 2.5) +
   labs(title = "1995-2007") + 
   
   coord_polar("y", start = 0) + 
@@ -97,12 +95,11 @@ pie1_fig
 
 
 #2nd Pie Chart
-pie2_fig = pies %>% filter(time.period == "Second") %>% 
+pie2_fig <- pies %>% filter(time.period == "Second") %>% 
 ggplot(aes(x = "", y = Count, fill = Method)) +
   geom_bar(stat = "identity", width = 1) + 
   scale_fill_manual(values = c("#b2df8a", "#1f78b4", "#a6cee3")) + 
-    #geom_text(aes(label = paste(round(Count / sum(Count) * 100, 1), "%")),
-           # position = position_stack(vjust = 0.5), size = 2.5) +
+
   labs(title = "2007-2014") + 
   
   coord_polar("y", start = 0) + 
@@ -115,12 +112,11 @@ ggplot(aes(x = "", y = Count, fill = Method)) +
 pie2_fig
 
 #3rd Pie Chart
-pie3_fig = pies %>% filter(time.period == "Third") %>% 
+pie3_fig <- pies %>% filter(time.period == "Third") %>% 
 ggplot(aes(x = "", y = Count, fill = Method)) +
   geom_bar(stat = "identity", width = 1) + 
   scale_fill_manual(values = c("#b2df8a", "#1f78b4", "#a6cee3")) + 
-    #geom_text(aes(label = paste(round(Count / sum(Count) * 100, 1), "%")),
-           # position = position_stack(vjust = 0.5), size = 2.5) +
+
   labs(title = "2015-2017") + 
   
   coord_polar("y", start = 0) + 
@@ -133,12 +129,11 @@ ggplot(aes(x = "", y = Count, fill = Method)) +
 pie3_fig
 
 #4th Pie Chart
-pie4_fig = pies %>% filter(time.period == "Fourth") %>% 
+pie4_fig <- pies %>% filter(time.period == "Fourth") %>% 
 ggplot(aes(x = "", y = Count, fill = Method)) +
   geom_bar(stat = "identity", width = 1) + 
   scale_fill_manual(values = c("#b2df8a", "#1f78b4", "#a6cee3")) + 
-    #geom_text(aes(label = paste(round(Count / sum(Count) * 100, 1), "%")),
-           # position = position_stack(vjust = 0.5), size = 2.5) +
+
   labs(title = "2018-2020") + 
   
   coord_polar("y", start = 0) + 
@@ -153,16 +148,19 @@ pie4_fig
 Combining figures using facet grid
 
 ```{r combining 3(a) and 3(b), saving the plot}
+figure <- ggarrange(ggarrange(pie1_fig, pie2_fig, pie3_fig, pie4_fig, nrow = 1, ncol = 4, widths = c(1.3,0.8,0.5,0.5),  common.legend = TRUE, legend = "top"), researchtrends_fig, nrow = 2, ncol =1, heights = c(1, 3))
+
 png(filename = "Figure3.png",            
   width = 2400,        
   height = 2100,
-  res = 300,  
-  
+  res = 300  
   ) 
 
-ggarrange(ggarrange(pie1_fig, pie2_fig, pie3_fig, pie4_fig, nrow = 1, ncol = 4, widths = c(1.3,0.8,0.5,0.5),  common.legend = TRUE, legend = "top"), researchtrends_fig, nrow = 2, ncol =1, heights = c(1, 3))
+figure
 
 dev.off()
+
+figure
 ```  
 
 ```{r removing variables}
@@ -228,12 +226,12 @@ ncptrend<- ncptrend %>% group_by(Label, Trend) %>% summarize(TotalCount = sum(Co
 ncptrend <- ncptrend %>% mutate(Percent = round(TotalCount/sum(TotalCount), 2))
 
 #factorizing the Trend column
-ncptrend$Trend = factor(ncptrend$Trend, levels = c("Positive", "Negative"))
+ncptrend$Trend <- factor(ncptrend$Trend, levels = c("Positive", "Negative"))
 ```  
 
 Making the figure::
 ```{r ncp trends figure}
-figure = ggplot() +
+figure <- ggplot() +
   #line graph for total number of occurrences for each NCP
   geom_line(data = ncpcount, 
             aes(x = reorder(Label, Count), y = Count, group = grp, color = '#003366'), 
@@ -285,6 +283,10 @@ png(filename = "Figure5.png",
   ) 
 
 figure
+
+dev.off()
+
+figure
 ```  
 
 ```{r removing variables for figure 5}
@@ -294,8 +296,164 @@ rm(list = ls())
 
 # Figure 6: Drivers of Change  
 Note: We combine positive and negative drivers of change manually
-## Positive Drivers of Change  
-```{r}
+```{r reading data, figure 6}
+overall_data <- read.csv("ForFig5_6_DriversTrends.csv")
 
+overall_data$Indirect_Driver <- factor(overall_data$Indirect_Driver, levels = c("Demographic and Sociocultural", "Economic and Technological", "Institutions and Governance", "Conflicts"))
+```    
+
+Making the data adjustible to networkD3 function
+
+```{r data cleaning Figure 6}
+#extracting data for Indirect Driver -> Direct Driver
+countdata_1 <- overall_data %>% filter(Indirect_Driver != "NA") %>% filter(Direct_Driver != "Directly to NCP") %>% filter(Direct_Driver != "NA") %>% group_by(Indirect_Driver, Direct_Driver, Trend) %>%  summarize(count = n())
+colnames(countdata_1) = c("source", "target","type","count")
+
+#extracting Indirect Drivers -> NCP
+countdata_2 <- overall_data %>% 
+  filter(Direct_Driver == "Directly to NCP") %>% 
+  group_by(Indirect_Driver, NCP, Trend) %>%  
+  summarize(count = n())
+colnames(countdata_2) <- c("source", "target","type","count")
+
+#extracting Direct Drivers -> Nature
+countdata_3 <- overall_data %>% filter(Direct_Driver != "Directly to NCP") %>% filter(Direct_Driver != "NA") %>% filter(Nature != "NA") %>% group_by(Direct_Driver, Nature, Trend) %>%  summarize(count = n())
+colnames(countdata_3) <- c("source", "target","type","count")
+
+#extracting Nature -> NCP
+countdata_4 <- overall_data %>% filter(Nature != "Directly to NCP") %>% filter(Nature != "NA") %>% filter(NCP != "NA") %>% group_by(Nature, NCP, Trend) %>%  summarize(count = n())
+colnames(countdata_4) <- c("source", "target","type","count")
 ```
+
+## Positive Drivers of Change
+```{r plotting positive drivers}
+links <- rbind(countdata_1, countdata_2, countdata_3, countdata_4)
+
+
+links$group <- as.factor(c(rep("a", 7), rep("b",5), rep("c", 7), "d", rep("a", 6), rep("b",6), rep("c", 12), rep("e", 5), rep("f",8), rep("g", 5), rep("h", 10), "i", rep("j",5), rep("k", 9), rep("l", 19), rep("m",11), rep("n", 4), rep("o",4)))
+links = filter(links, type == "Positive")
+
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+  as.character(links$target)) %>% unique()
+)
+
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+
+nodes$group <- as.factor(c("a", "b", "c", "f", "h", "j", "k", "l", "m", "n", "o", rep("p", 7), rep("p",4)))
+
+
+my_color <-  'd3.scaleOrdinal() .domain(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"]) .range(["#decbe4", "#d9d9d9","#fddaec", "#fb6a4a", "#F9A778", "#b3cde3", "#e5d8bd", "#ccffe6", "#ffd9cc", "#ffb3b3", "#FAE1AA", "#b2df8a", "#66cccc", "#FBEF8B","#978E9D ", "#CCFAAA"])'
+
+
+# Make the Network
+drivers_positive <- sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "count", NodeID = "name", colourScale = my_color, NodeGroup = "group", LinkGroup = "group",
+              sinksRight = TRUE, nodeWidth = 15, nodePadding = 12, fontSize = 18, height = 500, width = 1000)
+
+drivers_positive
+
+```  
+
+## Negative Drivers of Change
+```{r plotting negative drivers}
+links <- rbind(countdata_1, countdata_2, countdata_3, countdata_4)
+
+links$group <- as.factor(c(rep("a", 7), rep("b",5), rep("c", 7), "d", rep("a", 6), rep("b",6), rep("c", 12), rep("e", 5), rep("f",8), rep("g", 5), rep("h", 10), "i", rep("j",5), rep("k", 9), rep("l", 19), rep("m",11), rep("n", 4), rep("o",4)))
+links <- filter(links, type == "Negative")
+
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+  as.character(links$target)) %>% unique()
+)
+
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+
+
+nodes$group <- as.factor(c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j" , "k", "l", "m", "n" , "o", rep("p",14)))
+
+my_color =  'd3.scaleOrdinal() .domain(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"]) .range(["#decbe4", "#d9d9d9","#fddaec", "#fb6a4a", "#F9A778", "#b3cde3", "#e5d8bd", "#ccffe6", "#ffd9cc", "#ffb3b3", "#FAE1AA", "#b2df8a", "#66cccc", "#FBEF8B","#978E9D ", "#CCFAAA"])'
+
+
+# Make the Network
+drivers_negative <- sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "count", NodeID = "name", colourScale = my_color, NodeGroup = "group", LinkGroup = "group",
+              sinksRight = TRUE, nodeWidth = 15, nodePadding = 12, fontSize = 18, height = 500, width = 1000)
+
+drivers_negative
+```  
+
+```{r deleting files used for fig 6}
+rm(list = ls())
+```
+
+
+# Fig 7: NCP - SDG linkages  
+```{r adding data, fig. 7}
+data <- read.csv("ForFig7_NCPSDGLinkages.csv")
+
+
+data$Ecosystem <- factor(data$Ecosystem, 
+                        levels = c("Forest", "Freshwater", "Farmland", "Grassland",
+                                   "Agroforest", "Others"))
+
+#first, we need to separate out the 1.5, 11.5, and 13.1 targets:
+data <- separate_rows(data, SDG, sep = ", ")
+#now, only retaining the goals, and removing the dots.
+data$SDG <- gsub("\\..*", "", data$SDG)
+#finally, adding "SDG" infornt of these numbers::
+data$SDG <- paste("SDG ", data$SDG, sep = "")
+
+#extracting data for Ecosystem -> NCP
+countdata_1 <- data %>% filter(NCP_short != "NA") %>% group_by(Ecosystem, NCP_short, Effect) %>%  summarize(count = n())
+colnames(countdata_1) <- c("source", "target","type","count")
+
+#extracting NCP -> SDG
+countdata_2 <- data %>% 
+  filter(!is.na(NCP_short)) %>%
+  filter(SDG != "SDG NA") %>%#weird category formed due to the paste function
+ # filter(!is.na(SDG)) %>%
+  group_by(NCP_short, SDG, Effect) %>%
+  summarize(count = n())
+colnames(countdata_2) = c("source", "target","type","count")
+```
+
+```{r making the figure}
+links <- rbind(countdata_1, countdata_2)
+
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+  as.character(links$target)) %>% unique()
+)
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+  
+nodes$group <- as.factor(c("a", "b", "c", "d", "e", "f", "reg", "reg", "nmat", "mat",
+                          "reg", "reg", "nmat", "nmat", "mat", "mat", "mat",
+                          "nmat", "reg", "reg", "reg", "reg", "reg", rep("sdg", 12)))
+
+#assigning color values based on (1) Individual Ecosystems, (2) NCP category and (3) SDGs               
+my_color <-  'd3.scaleOrdinal() .domain(["a", "b", "c", "d", "e", "f", "reg", "mat", "nmat", "sdg", "Negative", "Positive"]) .range(["#b2df8a", "#66cccc","#FAE1AA", "#FBEF8B","#f2f2f2", "#978E9D",  "#CCFAAA", "#ffd6cc", "#79bcd2", "#ffebe6", "#fbb4ae", "#ccebc5"])'
+
+# Make the Network
+ncp2sdg <- sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "count", NodeID = "name", colourScale = my_color, NodeGroup = "group", 
+              LinkGroup = "type", sinksRight = TRUE, nodeWidth = 15, nodePadding = 12, fontSize = 14)
+
+ncp2sdg
+```
+
+```{r removing data Figure 7}
+rm(list = ls())
+```
+
+
 
